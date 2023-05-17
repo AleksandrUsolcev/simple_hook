@@ -15,6 +15,8 @@ app.config['DEBUG'] = False
 SECRET = os.getenv('SECRET')
 # local repository path, example: /home/my_project/repo_folder/
 REPO_PATH = os.getenv('REPO_PATH')
+# local docker-compose path
+COMPOSE_PATH = os.getenv('COMPOSE_PATH')
 
 
 @app.route('/webhook', methods=['POST'])
@@ -29,8 +31,7 @@ def webhook():
 
     if is_git_repository(REPO_PATH):
         git_pull(REPO_PATH)
-
-    return 'Success'
+        docker_compose(COMPOSE_PATH)
 
 
 def is_valid_signature(signature, payload, secret):
