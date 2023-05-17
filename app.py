@@ -17,6 +17,7 @@ SECRET = os.getenv('SECRET')
 REPO_PATH = os.getenv('REPO_PATH')
 # local docker-compose path
 COMPOSE_PATH = os.getenv('COMPOSE_PATH')
+REF = f'refs/heads/{os.getenv("BRANCH_NAME")}'
 
 
 @app.route('/webhook', methods=['POST'])
@@ -26,10 +27,10 @@ def webhook():
     if not is_valid_signature(signature, request.data, SECRET):
         abort(403, 'Signature is failed')
 
-    # data = request.get_json()
-    # repo_url = data.get('repository').get('html_url')
+    data = request.get_json()
+    pushed_to = data.get('ref')
 
-    if is_git_repository(REPO_PATH):
+    if is_git_repository(REPO_PATH) and pushed_to == REF:
         git_pull(REPO_PATH)
         docker_compose(COMPOSE_PATH)
 
