@@ -1,7 +1,9 @@
 import hashlib
 import hmac
+import logging
 import os
 import subprocess
+from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
 from flask import Flask, abort, request
@@ -20,6 +22,17 @@ COMPOSE_PATH = os.getenv('COMPOSE_PATH')
 REF = f'refs/heads/{os.getenv("BRANCH_NAME")}'
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('app_logger')
+handler = RotatingFileHandler(
+    'app.log', maxBytes=10 * 1024 * 1024, backupCount=1
+)
+formatter = logging.Formatter('%(asctime)s, %(levelname)s, %(message)s')
+
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     signature = request.headers.get('X-Hub-Signature')
@@ -29,10 +42,16 @@ def webhook():
 
     data = request.get_json()
     pushed_to = data.get('ref')
+    commit_author = data.get('head_commit').get('author').get('username')
+    logger.info(f'{commit_author} made a commit')
 
     if is_git_repository(REPO_PATH) and pushed_to == REF:
         git_pull(REPO_PATH)
         docker_compose(COMPOSE_PATH)
+        logger.info('pull/compose finished')
+        return 'pull/compose ok'
+
+    return 'webhook received'
 
 
 def is_valid_signature(signature, payload, secret):
