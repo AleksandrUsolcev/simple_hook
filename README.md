@@ -9,6 +9,6 @@ choose content type: `application/json`
 
 add your secret key
 
-add .env in project folder ty [example](example.env)
+add .env in project folder like [example](example.env)
 
 run app
